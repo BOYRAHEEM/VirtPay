@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "VirtMo",
+    "slug": "virtmo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.virtmo.app"
+    },
+    "android": {
+      "package": "com.virtmo.app"
+    }
+  }
+}
