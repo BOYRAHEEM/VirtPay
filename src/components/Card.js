@@ -1,23 +1,19 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 const Card = ({ card, style }) => {
-  const formatCardNumber = (number) => {
-    return number.replace(/(.{4})/g, '$1 ').trim();
-  };
+  const formatCardNumber = (number) =>
+    number.replace(/(.{4})/g, '$1 ').trim();
 
-  const getCardGradient = () => {
-    if (card.cardType === 'visa') {
-      return ['#1e3c72', '#2a5298'];
-    } else {
-      return ['#eb3349', '#f45c43'];
-    }
-  };
+  const getCardGradient = () =>
+    card.cardType === 'visa'
+      ? ['#1e3c72', '#2a5298']
+      : ['#eb3349', '#f45c43'];
 
-  const getCardLogo = () => {
-    return card.cardType === 'visa' ? 'VISA' : 'Mastercard';
-  };
+  const getCardLogo = () =>
+    card.cardType === 'visa' ? 'VISA' : 'Mastercard';
 
   return (
     <View style={[styles.container, style]}>
@@ -28,7 +24,7 @@ const Card = ({ card, style }) => {
         style={styles.gradient}
       >
         <View style={styles.cardContent}>
-          {/* Header: chip on left, provider badge on right */}
+          {/* Header: chip | provider badge */}
           <View style={styles.cardHeader}>
             <View style={styles.chipContainer}>
               <View style={styles.chip} />
@@ -45,7 +41,7 @@ const Card = ({ card, style }) => {
             </Text>
           </View>
 
-          {/* Footer: cardholder on left, expiry + network logo on right */}
+          {/* Footer: cardholder | expiry + network logo */}
           <View style={styles.cardFooter}>
             <View>
               <Text style={styles.label}>CARDHOLDER</Text>
@@ -62,6 +58,14 @@ const Card = ({ card, style }) => {
             </View>
           </View>
         </View>
+
+        {/* Frozen overlay */}
+        {!card.isActive && (
+          <View style={styles.frozenOverlay}>
+            <Ionicons name="snow-outline" size={36} color="#ffffff" />
+            <Text style={styles.frozenLabel}>FROZEN</Text>
+          </View>
+        )}
       </LinearGradient>
     </View>
   );
@@ -74,10 +78,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
@@ -166,6 +167,19 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontStyle: 'italic',
     letterSpacing: 1,
+  },
+  frozenOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 62, 140, 0.78)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+  },
+  frozenLabel: {
+    color: '#ffffff',
+    fontSize: 22,
+    fontWeight: '700',
+    letterSpacing: 6,
   },
 });
 

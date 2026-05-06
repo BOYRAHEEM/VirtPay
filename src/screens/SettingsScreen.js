@@ -8,16 +8,111 @@ import {
   Switch,
   Alert,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { useCards } from '../context/CardContext';
 import { useAuth } from '../context/AuthContext';
 import * as Haptics from 'expo-haptics';
 
 const SettingsScreen = () => {
-  const { cards, mobileMoneyProvider, setMobileMoneyProvider } = useCards();
-  const { logout, user } = useAuth();
+  const navigation = useNavigation();
+  const { cards, clearAllData } = useCards();
+  const {
+    logout,
+    user,
+    pin,
+    removePin,
+    biometricEnabled,
+    toggleBiometric,
+  } = useAuth();
+
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
-  const [biometricEnabled, setBiometricEnabled] = React.useState(false);
+
+  const handleSignOut = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          await clearAllData();
+          await logout();
+        },
+      },
+    ]);
+  };
+
+  const handlePinAction = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (pin) {
+      Alert.alert('PIN Protection', 'Your account is protected with a PIN.', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Change PIN',
+          onPress: () => navigation.navigate('SetupPin'),
+        },
+        {
+          text: 'Disable PIN',
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert(
+              'Disable PIN',
+              'Your account will no longer require a PIN to unlock.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Disable',
+                  style: 'destructive',
+                  onPress: () => {
+                    removePin();
+                    toggleBiometric(false);
+                  },
+                },
+              ]
+            ),
+        },
+      ]);
+    } else {
+      navigation.navigate('SetupPin');
+    }
+  };
+
+  const handleBiometricToggle = async (value) => {
+    if (value) {
+      if (!pin) {
+        Alert.alert(
+          'PIN Required',
+          'You must set up a PIN before enabling biometric authentication.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Set Up PIN', onPress: () => navigation.navigate('SetupPin') },
+          ]
+        );
+        return;
+      }
+      try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        if (!hasHardware || !isEnrolled) {
+          Alert.alert(
+            'Not Available',
+            'Biometric authentication is not set up on this device. Please configure it in your device settings.'
+          );
+          return;
+        }
+        const result = await LocalAuthentication.authenticateAsync({
+          promptMessage: 'Confirm to enable biometric unlock',
+        });
+        if (!result.success) return;
+      } catch (_) {
+        return;
+      }
+    }
+    toggleBiometric(value);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
 
   const settingsSections = [
     {
@@ -26,38 +121,45 @@ const SettingsScreen = () => {
         {
           icon: 'person-outline',
           label: 'Profile',
+          value: user?.fullName || user?.phoneNumber || '',
           action: () => Alert.alert('Profile', 'Profile settings coming soon'),
         },
         {
           icon: 'card-outline',
           label: 'Payment Methods',
-          action: () => Alert.alert('Payment Methods', 'Payment methods coming soon'),
-        },
-        {
-          icon: 'shield-checkmark-outline',
-          label: 'Security',
-          action: () => Alert.alert('Security', 'Security settings coming soon'),
+          action: () =>
+            Alert.alert('Payment Methods', 'Payment methods coming soon'),
         },
         {
           icon: 'log-out-outline',
           label: 'Sign Out',
-          action: () => {
-            Alert.alert(
-              'Sign Out',
-              'Are you sure you want to sign out?',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Sign Out',
-                  style: 'destructive',
-                  onPress: () => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    logout();
-                  },
-                },
-              ]
-            );
-          },
+          destructive: true,
+          action: handleSignOut,
+        },
+      ],
+    },
+    {
+      title: 'Security',
+      items: [
+        {
+          icon: 'keypad-outline',
+          label: 'PIN Protection',
+          value: pin ? 'Enabled' : 'Disabled',
+          valueColor: pin ? '#34C759' : '#FF3B30',
+          action: handlePinAction,
+        },
+        {
+          icon: 'finger-print-outline',
+          label: 'Biometric Authentication',
+          type: 'switch',
+          value: biometricEnabled,
+          onValueChange: handleBiometricToggle,
+        },
+        {
+          icon: 'shield-checkmark-outline',
+          label: 'Privacy & Security',
+          action: () =>
+            Alert.alert('Privacy & Security', 'Security settings coming soon'),
         },
       ],
     },
@@ -69,21 +171,16 @@ const SettingsScreen = () => {
           label: 'Notifications',
           type: 'switch',
           value: notificationsEnabled,
-          onValueChange: setNotificationsEnabled,
-        },
-        {
-          icon: 'finger-print-outline',
-          label: 'Biometric Authentication',
-          type: 'switch',
-          value: biometricEnabled,
-          onValueChange: setBiometricEnabled,
+          onValueChange: (val) => {
+            setNotificationsEnabled(val);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          },
         },
         {
           icon: 'moon-outline',
           label: 'Dark Mode',
-          type: 'switch',
-          value: false,
-          onValueChange: () => Alert.alert('Dark Mode', 'Dark mode coming soon'),
+          value: 'Coming Soon',
+          action: null,
         },
       ],
     },
@@ -98,17 +195,20 @@ const SettingsScreen = () => {
         {
           icon: 'document-text-outline',
           label: 'Terms & Conditions',
-          action: () => Alert.alert('Terms', 'Terms & Conditions coming soon'),
+          action: () =>
+            Alert.alert('Terms', 'Terms & Conditions coming soon'),
         },
         {
           icon: 'lock-closed-outline',
           label: 'Privacy Policy',
-          action: () => Alert.alert('Privacy', 'Privacy Policy coming soon'),
+          action: () =>
+            Alert.alert('Privacy', 'Privacy Policy coming soon'),
         },
         {
           icon: 'mail-outline',
           label: 'Contact Us',
-          action: () => Alert.alert('Contact', 'Contact support coming soon'),
+          action: () =>
+            Alert.alert('Contact', 'Contact support coming soon'),
         },
       ],
     },
@@ -142,6 +242,9 @@ const SettingsScreen = () => {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <Text style={styles.title}>Settings</Text>
+        {user?.fullName && (
+          <Text style={styles.userName}>{user.fullName}</Text>
+        )}
       </View>
 
       {settingsSections.map((section, sectionIndex) => (
@@ -163,11 +266,19 @@ const SettingsScreen = () => {
                   <Ionicons
                     name={item.icon}
                     size={22}
-                    color="#007AFF"
+                    color={item.destructive ? '#FF3B30' : '#007AFF'}
                     style={styles.settingIcon}
                   />
-                  <Text style={styles.settingLabel}>{item.label}</Text>
+                  <Text
+                    style={[
+                      styles.settingLabel,
+                      item.destructive && styles.settingLabelDestructive,
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
                 </View>
+
                 {item.type === 'switch' ? (
                   <Switch
                     value={item.value}
@@ -176,10 +287,17 @@ const SettingsScreen = () => {
                     thumbColor="#ffffff"
                   />
                 ) : item.value ? (
-                  <Text style={styles.settingValue}>{item.value}</Text>
-                ) : (
+                  <Text
+                    style={[
+                      styles.settingValue,
+                      item.valueColor ? { color: item.valueColor } : null,
+                    ]}
+                  >
+                    {item.value}
+                  </Text>
+                ) : item.action ? (
                   <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
-                )}
+                ) : null}
               </TouchableOpacity>
             ))}
           </View>
@@ -187,7 +305,7 @@ const SettingsScreen = () => {
       ))}
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>VirtMo - Virtual Cards for Ghana</Text>
+        <Text style={styles.footerText}>VirtMo — Virtual Cards for Ghana</Text>
         <Text style={styles.footerSubtext}>
           Securely linked to your mobile money
         </Text>
@@ -210,6 +328,11 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: '#000000',
+  },
+  userName: {
+    fontSize: 15,
+    color: '#8E8E93',
+    marginTop: 4,
   },
   section: {
     marginTop: 20,
@@ -253,8 +376,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#000000',
   },
+  settingLabelDestructive: {
+    color: '#FF3B30',
+  },
   settingValue: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#8E8E93',
     marginRight: 8,
   },
