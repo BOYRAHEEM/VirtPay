@@ -14,7 +14,7 @@ import * as Haptics from 'expo-haptics';
 
 const ActivityScreen = () => {
   const navigation = useNavigation();
-  const { activities } = useCards();
+  const { activities, cards } = useCards();
   const [filter, setFilter] = useState('all'); // all, cards, transactions
 
   const filterOptions = [
@@ -23,38 +23,36 @@ const ActivityScreen = () => {
     { id: 'transactions', label: 'Transactions' },
   ];
 
+  const CARD_ACTIVITY_TYPES = ['card_created', 'card_deleted', 'card_frozen', 'card_unfrozen'];
+
   const filteredActivities = activities.filter((activity) => {
     if (filter === 'all') return true;
-    return activity.type === filter;
+    if (filter === 'cards') return CARD_ACTIVITY_TYPES.includes(activity.type);
+    if (filter === 'transactions') return activity.type === 'transaction';
+    return true;
   });
 
   const getActivityIcon = (type) => {
     switch (type) {
-      case 'card_created':
-        return 'card';
-      case 'card_deleted':
-        return 'trash';
-      case 'transaction':
-        return 'swap-horizontal';
-      case 'card_viewed':
-        return 'eye';
-      default:
-        return 'information-circle';
+      case 'card_created':    return 'card';
+      case 'card_deleted':    return 'trash';
+      case 'card_frozen':     return 'snow-outline';
+      case 'card_unfrozen':   return 'flash-outline';
+      case 'transaction':     return 'swap-horizontal';
+      case 'card_viewed':     return 'eye';
+      default:                return 'information-circle';
     }
   };
 
   const getActivityColor = (type) => {
     switch (type) {
-      case 'card_created':
-        return '#34C759';
-      case 'card_deleted':
-        return '#FF3B30';
-      case 'transaction':
-        return '#007AFF';
-      case 'card_viewed':
-        return '#8E8E93';
-      default:
-        return '#8E8E93';
+      case 'card_created':    return '#34C759';
+      case 'card_deleted':    return '#FF3B30';
+      case 'card_frozen':     return '#007AFF';
+      case 'card_unfrozen':   return '#AF52DE';
+      case 'transaction':     return '#FF9500';
+      case 'card_viewed':     return '#8E8E93';
+      default:                return '#8E8E93';
     }
   };
 
@@ -80,7 +78,10 @@ const ActivityScreen = () => {
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         if (item.cardId) {
-          // Navigate to card details if applicable
+          const card = cards.find(c => c.id === item.cardId);
+          if (card) {
+            navigation.navigate('Home', { screen: 'CardDetails', params: { card } });
+          }
         }
       }}
     >
@@ -123,8 +124,7 @@ const ActivityScreen = () => {
       <View style={styles.header}>
         <Text style={styles.title}>Activity</Text>
         <Text style={styles.subtitle}>
-          {filteredActivities.length} activity
-          {filteredActivities.length !== 1 ? 'ies' : ''}
+          {filteredActivities.length} {filteredActivities.length !== 1 ? 'activities' : 'activity'}
         </Text>
       </View>
 

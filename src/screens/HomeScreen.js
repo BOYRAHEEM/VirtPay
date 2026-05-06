@@ -10,6 +10,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCards } from '../context/CardContext';
+import { useAuth } from '../context/AuthContext';
 import Card from '../components/Card';
 import Button from '../components/Button';
 
@@ -18,7 +19,9 @@ const { width } = Dimensions.get('window');
 const HomeScreen = () => {
   const navigation = useNavigation();
   const { cards } = useCards();
+  const { user } = useAuth();
   const latestCard = cards[0];
+  const firstName = user?.fullName?.split(' ')[0] || '';
 
   const totalBalance = cards.reduce((sum, card) => sum + (card.balance || 0), 0);
 
@@ -26,7 +29,7 @@ const HomeScreen = () => {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Hello!</Text>
+          <Text style={styles.greeting}>Hello{firstName ? `, ${firstName}` : ''}!</Text>
           <Text style={styles.subtitle}>Welcome to VirtMo</Text>
         </View>
         <TouchableOpacity style={styles.notificationButton}>

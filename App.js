@@ -15,62 +15,39 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import ActivityScreen from './src/screens/ActivityScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
-import { CardProvider } from './src/context/CardContext';
+import LoadingScreen from './src/screens/LoadingScreen';
+import PinScreen from './src/screens/PinScreen';
+
+import { CardProvider, useCards } from './src/context/CardContext';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+
+import ErrorBoundary from './src/components/ErrorBoundary';
+import NetworkBanner from './src/components/NetworkBanner';
+import useNetworkStatus from './src/hooks/useNetworkStatus';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
+const HEADER_OPTS = {
+  headerStyle: { backgroundColor: '#ffffff' },
+  headerTintColor: '#000000',
+  headerTitleStyle: { fontWeight: '600' },
+};
+
 function HomeStack() {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: {
-          backgroundColor: '#ffffff',
-        },
-        headerTintColor: '#000000',
-        headerTitleStyle: {
-          fontWeight: '600',
-        },
-      }}
-    >
-      <Stack.Screen 
-        name="HomeMain" 
-        component={HomeScreen}
-        options={{ title: 'VirtMo' }}
-      />
-      <Stack.Screen 
-        name="CardDetails" 
-        component={CardDetailsScreen}
-        options={{ title: 'Card Details' }}
-      />
+    <Stack.Navigator screenOptions={HEADER_OPTS}>
+      <Stack.Screen name="HomeMain" component={HomeScreen} options={{ title: 'VirtMo' }} />
+      <Stack.Screen name="CardDetails" component={CardDetailsScreen} options={{ title: 'Card Details' }} />
     </Stack.Navigator>
   );
 }
 
 function CardsStack() {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: {
-          backgroundColor: '#ffffff',
-        },
-        headerTintColor: '#000000',
-        headerTitleStyle: {
-          fontWeight: '600',
-        },
-      }}
-    >
-      <Stack.Screen 
-        name="MyCardsMain" 
-        component={MyCardsScreen}
-        options={{ title: 'My Cards' }}
-      />
-      <Stack.Screen 
-        name="CardDetailsFromCards" 
-        component={CardDetailsScreen}
-        options={{ title: 'Card Details' }}
-      />
+    <Stack.Navigator screenOptions={HEADER_OPTS}>
+      <Stack.Screen name="MyCardsMain" component={MyCardsScreen} options={{ title: 'My Cards' }} />
+      <Stack.Screen name="CardDetailsFromCards" component={CardDetailsScreen} options={{ title: 'Card Details' }} />
     </Stack.Navigator>
   );
 }
@@ -80,21 +57,14 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-
-          if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Cards') {
-            iconName = focused ? 'card' : 'card-outline';
-          } else if (route.name === 'Activity') {
-            iconName = focused ? 'time' : 'time-outline';
-          } else if (route.name === 'Generate') {
-            iconName = focused ? 'add-circle' : 'add-circle-outline';
-          } else if (route.name === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline';
-          }
-
-          return <Ionicons name={iconName} size={size} color={color} />;
+          const icons = {
+            Home: focused ? 'home' : 'home-outline',
+            Cards: focused ? 'card' : 'card-outline',
+            Activity: focused ? 'time' : 'time-outline',
+            Generate: focused ? 'add-circle' : 'add-circle-outline',
+            Settings: focused ? 'settings' : 'settings-outline',
+          };
+          return <Ionicons name={icons[route.name]} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#007AFF',
         tabBarInactiveTintColor: '#8E8E93',
@@ -107,50 +77,76 @@ function MainTabs() {
           paddingTop: 5,
           height: 60,
         },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-        },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
       })}
     >
       <Tab.Screen name="Home" component={HomeStack} />
       <Tab.Screen name="Cards" component={CardsStack} />
-      <Tab.Screen 
-        name="Activity" 
-        component={ActivityScreen}
-        options={{ title: 'Activity' }}
-      />
-      <Tab.Screen 
-        name="Generate" 
-        component={GenerateCardScreen}
-        options={{ title: 'Generate Card' }}
-      />
+      <Tab.Screen name="Activity" component={ActivityScreen} options={{ title: 'Activity' }} />
+      <Tab.Screen name="Generate" component={GenerateCardScreen} options={{ title: 'Generate Card' }} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
 }
 
+// Root stack: tabs + PIN setup as a modal screen
+function MainStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="MainTabs"
+        component={MainTabs}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SetupPin"
+        component={PinScreen}
+        initialParams={{ mode: 'setup' }}
+        options={{
+          title: 'PIN Protection',
+          presentation: 'modal',
+          ...HEADER_OPTS,
+        }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 function AuthStack() {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
     </Stack.Navigator>
   );
 }
 
-function AppNavigator() {
-  const { isAuthenticated } = useAuth();
+function AppContent() {
+  const { isAuthenticated, isLocked, isLoading: authLoading } = useAuth();
+  const { isLoading: cardsLoading } = useCards();
+  const isOnline = useNetworkStatus();
+
+  // Wait for both contexts to hydrate from storage
+  if (authLoading || cardsLoading) {
+    return <LoadingScreen />;
+  }
+
+  // Show lock screen outside NavigationContainer so it can't be navigated away from
+  if (isAuthenticated && isLocked) {
+    return (
+      <View style={styles.container}>
+        <StatusBar style="dark" />
+        <PinScreen mode="verify" />
+      </View>
+    );
+  }
 
   return (
     <NavigationContainer>
       <View style={styles.container}>
         <StatusBar style="dark" />
-        {isAuthenticated ? <MainTabs /> : <AuthStack />}
+        <NetworkBanner isOnline={isOnline} />
+        {isAuthenticated ? <MainStack /> : <AuthStack />}
       </View>
     </NavigationContainer>
   );
@@ -158,11 +154,13 @@ function AppNavigator() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <CardProvider>
-        <AppNavigator />
-      </CardProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <CardProvider>
+          <AppContent />
+        </CardProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
