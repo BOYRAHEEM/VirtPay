@@ -14,7 +14,7 @@ import * as Haptics from 'expo-haptics';
 
 const ActivityScreen = () => {
   const navigation = useNavigation();
-  const { activities } = useCards();
+  const { activities, cards } = useCards();
   const [filter, setFilter] = useState('all'); // all, cards, transactions
 
   const filterOptions = [
@@ -25,7 +25,9 @@ const ActivityScreen = () => {
 
   const filteredActivities = activities.filter((activity) => {
     if (filter === 'all') return true;
-    return activity.type === filter;
+    if (filter === 'cards') return activity.type === 'card_created' || activity.type === 'card_deleted';
+    if (filter === 'transactions') return activity.type === 'transaction';
+    return true;
   });
 
   const getActivityIcon = (type) => {
@@ -80,7 +82,10 @@ const ActivityScreen = () => {
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         if (item.cardId) {
-          // Navigate to card details if applicable
+          const card = cards.find(c => c.id === item.cardId);
+          if (card) {
+            navigation.navigate('Home', { screen: 'CardDetails', params: { card } });
+          }
         }
       }}
     >
@@ -123,8 +128,7 @@ const ActivityScreen = () => {
       <View style={styles.header}>
         <Text style={styles.title}>Activity</Text>
         <Text style={styles.subtitle}>
-          {filteredActivities.length} activity
-          {filteredActivities.length !== 1 ? 'ies' : ''}
+          {filteredActivities.length} {filteredActivities.length !== 1 ? 'activities' : 'activity'}
         </Text>
       </View>
 

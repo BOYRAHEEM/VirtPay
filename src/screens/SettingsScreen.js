@@ -38,6 +38,27 @@ const SettingsScreen = () => {
           label: 'Security',
           action: () => Alert.alert('Security', 'Security settings coming soon'),
         },
+        {
+          icon: 'log-out-outline',
+          label: 'Sign Out',
+          action: () => {
+            Alert.alert(
+              'Sign Out',
+              'Are you sure you want to sign out?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Sign Out',
+                  style: 'destructive',
+                  onPress: () => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    logout();
+                  },
+                },
+              ]
+            );
+          },
+        },
       ],
     },
     {
@@ -105,35 +126,6 @@ const SettingsScreen = () => {
           label: 'Statistics',
           value: `${cards.length} card${cards.length !== 1 ? 's' : ''}`,
           action: null,
-        },
-      ],
-    },
-    {
-      title: 'Account',
-      items: [
-        {
-          icon: 'log-out-outline',
-          label: 'Sign Out',
-          action: () => {
-            Alert.alert(
-              'Sign Out',
-              'Are you sure you want to sign out?',
-              [
-                {
-                  text: 'Cancel',
-                  style: 'cancel',
-                },
-                {
-                  text: 'Sign Out',
-                  style: 'destructive',
-                  onPress: () => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    logout();
-                  },
-                },
-              ]
-            );
-          },
         },
       ],
     },

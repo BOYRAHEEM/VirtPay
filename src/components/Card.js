@@ -28,19 +28,24 @@ const Card = ({ card, style }) => {
         style={styles.gradient}
       >
         <View style={styles.cardContent}>
+          {/* Header: chip on left, provider badge on right */}
           <View style={styles.cardHeader}>
             <View style={styles.chipContainer}>
               <View style={styles.chip} />
             </View>
-            <Text style={styles.cardType}>{getCardLogo()}</Text>
+            <View style={styles.providerBadge}>
+              <Text style={styles.providerText}>{card.mobileMoneyProvider}</Text>
+            </View>
           </View>
 
+          {/* Card number */}
           <View style={styles.cardNumberContainer}>
             <Text style={styles.cardNumber}>
               {formatCardNumber(card.cardNumber)}
             </Text>
           </View>
 
+          {/* Footer: cardholder on left, expiry + network logo on right */}
           <View style={styles.cardFooter}>
             <View>
               <Text style={styles.label}>CARDHOLDER</Text>
@@ -48,14 +53,13 @@ const Card = ({ card, style }) => {
                 {card.cardholderName.toUpperCase()}
               </Text>
             </View>
-            <View style={styles.expiryContainer}>
-              <Text style={styles.label}>EXPIRES</Text>
-              <Text style={styles.expiryDate}>{card.expiryDate}</Text>
+            <View style={styles.cardFooterRight}>
+              <View style={styles.expiryContainer}>
+                <Text style={styles.label}>EXPIRES</Text>
+                <Text style={styles.expiryDate}>{card.expiryDate}</Text>
+              </View>
+              <Text style={styles.cardType}>{getCardLogo()}</Text>
             </View>
-          </View>
-
-          <View style={styles.providerBadge}>
-            <Text style={styles.providerText}>{card.mobileMoneyProvider}</Text>
           </View>
         </View>
       </LinearGradient>
@@ -81,16 +85,15 @@ const styles = StyleSheet.create({
   gradient: {
     flex: 1,
     padding: 20,
-    justifyContent: 'space-between',
   },
   cardContent: {
     flex: 1,
+    justifyContent: 'space-between',
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 30,
   },
   chipContainer: {
     width: 50,
@@ -106,20 +109,25 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     borderRadius: 4,
   },
-  cardType: {
+  providerBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  providerText: {
     color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: 1,
+    fontSize: 12,
+    fontWeight: '600',
   },
   cardNumberContainer: {
-    marginBottom: 30,
+    marginVertical: 16,
   },
   cardNumber: {
     color: '#ffffff',
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '600',
-    letterSpacing: 2,
+    letterSpacing: 3,
     fontFamily: 'monospace',
   },
   cardFooter: {
@@ -140,6 +148,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 1,
   },
+  cardFooterRight: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
   expiryContainer: {
     alignItems: 'flex-end',
   },
@@ -148,19 +160,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  providerBadge: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  providerText: {
+  cardType: {
     color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
+    fontStyle: 'italic',
+    letterSpacing: 1,
   },
 });
 

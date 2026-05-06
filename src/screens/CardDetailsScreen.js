@@ -8,17 +8,19 @@ import {
   Alert,
   Share,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { useCards } from '../context/CardContext';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import * as Haptics from 'expo-haptics';
 
-const CardDetailsScreen = ({ route }) => {
+const CardDetailsScreen = ({ route, navigation }) => {
   const { card: initialCard } = route.params;
-  const { updateCard, deleteCard } = useCards();
+  const { deleteCard, cards } = useCards();
   const [showCVV, setShowCVV] = useState(false);
-  const [card] = useState(initialCard);
+
+  const card = cards.find(c => c.id === initialCard.id) || initialCard;
 
   const handleShare = async () => {
     try {
@@ -47,16 +49,20 @@ const CardDetailsScreen = ({ route }) => {
           onPress: () => {
             deleteCard(card.id);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            // Navigation will be handled by the navigation system
+            navigation.goBack();
           },
         },
       ]
     );
   };
 
-  const copyToClipboard = (text, label) => {
-    // In a real app, you'd use Clipboard from expo-clipboard
+  const copyToClipboard = async (text, label) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await Clipboard.setStringAsync(text);
+    } catch (_) {
+      // fallback: clipboard not available
+    }
     Alert.alert('Copied', `${label} copied to clipboard`);
   };
 
