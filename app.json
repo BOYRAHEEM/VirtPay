@@ -18,6 +18,9 @@
     },
     "android": {
       "package": "com.virtmo.app"
-    }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }

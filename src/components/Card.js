@@ -4,16 +4,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 const Card = ({ card, style }) => {
-  const formatCardNumber = (number) =>
-    number.replace(/(.{4})/g, '$1 ').trim();
+  const formatCardNumber = (number) => {
+    const digits = number.replace(/\s/g, '');
+    return digits.replace(/(.{4})/g, '$1 ').trim();
+  };
 
   const getCardGradient = () =>
-    card.cardType === 'visa'
+    card.cardType?.toLowerCase() === 'visa'
       ? ['#1e3c72', '#2a5298']
       : ['#eb3349', '#f45c43'];
 
   const getCardLogo = () =>
-    card.cardType === 'visa' ? 'VISA' : 'Mastercard';
+    card.cardType?.toLowerCase() === 'visa' ? 'VISA' : 'Mastercard';
 
   return (
     <View style={[styles.container, style]}>

@@ -9,10 +9,10 @@ import * as SecureStore from 'expo-secure-store';
 import { AppState } from 'react-native';
 
 const KEYS = {
-  USER: 'virtmo:user',
-  PIN: 'virtmo:pin',
-  IS_AUTH: 'virtmo:isAuthenticated',
-  BIOMETRIC: 'virtmo:biometricEnabled',
+  USER: 'virtmo_user',
+  PIN: 'virtmo_pin',
+  IS_AUTH: 'virtmo_isAuthenticated',
+  BIOMETRIC: 'virtmo_biometricEnabled',
 };
 
 // Lock app after 5 minutes in background

@@ -66,7 +66,7 @@ const HomeScreen = () => {
         </View>
         <View style={styles.statCard}>
           <Text style={styles.statLabel}>Active Cards</Text>
-          <Text style={styles.statValue}>{cards.length}</Text>
+          <Text style={styles.statValue}>{cards.filter(c => c.isActive).length}</Text>
         </View>
       </View>
 
@@ -144,7 +144,7 @@ const HomeScreen = () => {
               >
                 <View style={styles.recentCardContent}>
                   <Ionicons
-                    name={card.cardType === 'visa' ? 'card' : 'card-outline'}
+                    name={card.cardType?.toLowerCase() === 'visa' ? 'card' : 'card-outline'}
                     size={24}
                     color="#007AFF"
                   />
